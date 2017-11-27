@@ -23,8 +23,20 @@ void service(int client_id, cpen333::process::socket client, Database& database)
 			const char *cstr = str.c_str();
 			client.write(cstr, size);
 		}
-		else if (id == CLIENT_RESERVE_SERVER)
+		else if (id == CLIENT_RESERVE_SERVER) {
 			std::cout << "request reserve an order" << std::endl;
+			int UOsize;
+			client.read(&UOsize, sizeof(UOsize));
+			char cstr[50];
+			client.read(cstr, UOsize);
+			int orderCount;
+			client.read(&orderCount, sizeof(orderCount));
+			for (int i = 0; i < UOsize; i++) 
+				std::cout << cstr[i];
+			std::cout << " " << orderCount << std::endl;
+			int success = 1;
+			client.write(&success, sizeof(success));
+		}
 		else if (id == CLIENT_ORDER_SERVER)
 			std::cout << "request make an order" << std::endl;
 	} while (id != CLIENT_QUIT_SERVER);
