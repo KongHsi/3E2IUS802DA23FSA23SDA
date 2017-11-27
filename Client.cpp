@@ -30,10 +30,18 @@ int main() {
 			std::cin >> cmd;
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			int request = 0;
+			int resultSize = 0;
+			char str[256];
 			switch (cmd) {
 			case CLIENT_VIEW:
 				request = 1;
 				socket.write(&request, sizeof(request));
+				socket.read(&resultSize, sizeof(resultSize));
+				socket.read(&str, resultSize);
+				std::cout << "Welcome the biggeest duoshou website in Canada!" << std::endl;
+				std::cout << "We have:" << std::endl;
+				for (int i = 0; i<resultSize; ++i)
+					std::cout << str[i];
 				break;
 			case CLIENT_RESERVE:
 				request = 2;

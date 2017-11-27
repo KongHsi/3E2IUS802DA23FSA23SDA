@@ -12,21 +12,33 @@ class Database {
 		Database(void) {
 			std::cout << "Initializing database.\n" << std::endl;
 			std::ifstream fin(ITEMS_INITIALIZATION_FILE);
-			char buffer[30];
-			char number[5];
-			char warehouseNumber[5];
 			if (fin.is_open()) {
 				while (!fin.eof()) {
+					char buffer[30];
+					char number[10];
+					char warehouseNumber[10];
 					fin.getline(buffer, 30);
-					fin.getline(number, 5);
-					fin.getline(warehouseNumber, 5);
+					fin.getline(number, 10);
+					fin.getline(warehouseNumber, 10);
 					std::string str(buffer);
 					Item* item = new Item(str, atoi(number), atoi(warehouseNumber));
-					std::cout << "Item name: " << item->name << " , " 
-						<< "Number:  "<< item->number << " , "
+					std::cout << "Item name: " << item->name << ", " 
+						<< "Number:  "<< item->number << ", "
 						<< "Warehouse: " <<item->warehouse << std::endl;
 					database[str] = item;
 				}
 			}
+		}
+
+		std::string databaseToString() {
+			std::string str;
+			for (std::map<std::string, Item*>::iterator it = database.begin(); it != database.end(); ++it) {
+				str.append("\t");
+				str.append(it->first);
+				str.append("\t");
+				str.append(std::to_string(it->second->number));
+				str.append("\n");
+			}
+			return str;
 		}
 };

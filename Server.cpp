@@ -10,13 +10,19 @@
 #include <cpen333/process/socket.h>
 #include <cpen333/process/mutex.h>
 
-void service(int id, cpen333::process::socket client, Database& database) {
-	std::cout << "Client " << id << " connected" << std::endl;
+void service(int client_id, cpen333::process::socket client, Database& database) {
+	std::cout << "Client " << client_id << " connected" << std::endl;
+	int id = 0;
 	do {
 		client.read(&id, sizeof(int));
-		std::cout << id;
-		if (id == CLIENT_VIEW_SERVER)
+		if (id == CLIENT_VIEW_SERVER) {
 			std::cout << "request view products" << std::endl;
+			std::string str = database.databaseToString();
+			int size = str.size();
+			client.write(&size, sizeof(size));
+			const char *cstr = str.c_str();
+			client.write(cstr, size);
+		}
 		else if (id == CLIENT_RESERVE_SERVER)
 			std::cout << "request reserve an order" << std::endl;
 		else if (id == CLIENT_ORDER_SERVER)
