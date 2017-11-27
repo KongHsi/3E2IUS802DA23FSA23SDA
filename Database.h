@@ -7,7 +7,7 @@
 
 class Database {
 	public:
-		std::map<std::string, Item> database;
+		std::map<std::string, Item*> database;
 
 		Database(void) {
 			std::cout << "Initializing database.\n" << std::endl;
@@ -21,10 +21,11 @@ class Database {
 					fin.getline(number, 5);
 					fin.getline(warehouseNumber, 5);
 					std::string str(buffer);
-					Item item(str, atoi(number), atoi(warehouseNumber));
-					std::cout << item.name << std::endl;
-					std::cout << item.number << std::endl;
-					std::cout << item.warehouse << std::endl;
+					Item* item = new Item(str, atoi(number), atoi(warehouseNumber));
+					std::cout << "Item name: " << item->name << " , " 
+						<< "Number:  "<< item->number << " , "
+						<< "Warehouse: " <<item->warehouse << std::endl;
+					database[str] = item;
 				}
 			}
 		}
