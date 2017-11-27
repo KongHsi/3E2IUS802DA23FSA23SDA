@@ -15,7 +15,6 @@
 #define PORT_NUMBER 52102
 #define DATABASE_MUTEX "database_mutex"
 
-
-
+#define ITEMS_INITIALIZATION_FILE "data/items_initialization_file.txt"
 
 #endif

@@ -1,17 +1,17 @@
+
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <thread>
 #include <memory>
 #include <mutex>
-
+#include "Database.h"
 #include "Constants.h"
 #include <cpen333/process/socket.h>
 #include <cpen333/process/mutex.h>
 
-void service(cpen333::process::socket client) {
-	std::cout << "Client " << 0 << " connected" << std::endl;
-	int id;
+void service(int id, cpen333::process::socket client, Database& database) {
+	std::cout << "Client " << id << " connected" << std::endl;
 	do {
 		client.read(&id, sizeof(int));
 		std::cout << id;
@@ -32,8 +32,10 @@ int main() {
 
 	std::cout << "Server started on port " << server.port() << std::endl;
 	cpen333::process::socket client;
+	int id = 0;
+	Database database;
 	while (server.accept(client)) {
-		std::thread thread(service, std::move(client));
+		std::thread thread(service, id++, std::move(client), std::ref(database));
 		thread.detach();
 	}
 
@@ -41,3 +43,4 @@ int main() {
 	server.close();
 	return 0;
 }
+
