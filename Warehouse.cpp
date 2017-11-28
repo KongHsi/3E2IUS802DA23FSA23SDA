@@ -7,6 +7,7 @@
 #include <mutex>
 #include "Database.h"
 #include "Constants.h"
+#include "Order.h"
 #include <cpen333/process/socket.h>
 #include <cpen333/process/mutex.h>
 
@@ -18,11 +19,10 @@ void service_warehouse(int id_warehouse, cpen333::process::socket client_warehou
 	char cstr[200];
 	client_warehouse.read(cstr, size);
 	cstr[size] = '\0';
-	for (int i = 0; i < size; i++) {
-		std::cout << cstr[i];
-	}
 	int received = 1;
 	client_warehouse.write(&received, sizeof(received));
+	Order order(cstr);
+	order.printOrder();
 }
 
 int main() {

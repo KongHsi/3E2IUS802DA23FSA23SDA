@@ -12,6 +12,36 @@ public:
 	std::map<std::string, int> orders;
 	Order(int id, int userID) : id(id), userID(userID) {}
 
+	Order(char* in) {
+		int index = 0;
+		char id_arr[2];
+		while (*(in) != '\n') id_arr[index++] = *in++;
+		in++;
+		id = atoi(id_arr);
+		index = 0;
+		char userID_arr[2];
+		while (*(in) != '\n') userID_arr[index++] = *in++;
+		in++;
+		userID = atoi(userID_arr);
+		index = 0;
+		char count_arr[3];
+		while (*(in) != '\n') count_arr[index++] = *in++;
+		in++;
+		int size = atoi(count_arr);
+		for (int i = 0; i < size; i++) {
+			index = 0;
+			char item_arr[15];
+			char count_arr[4];
+			while (*(in) != '\n') item_arr[index++] = *in++;
+			item_arr[index] = '\0';
+			in++;
+			index = 0;
+			while (*(in) != '\n') count_arr[index++] = *in++;
+			count_arr[index] = '\0';
+			orders[std::string(item_arr)] = atoi(count_arr);
+		}
+	}
+	
 	void printOrder() {
 		for (std::map<std::string, int>::iterator iterator = orders.begin(); iterator != orders.end(); iterator++) {
 			std::cout << "Item: " << iterator->first << " Quantity: " << iterator->second << std::endl;

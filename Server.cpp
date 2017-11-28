@@ -71,11 +71,12 @@ void service(int client_id, cpen333::process::socket client, Database& database)
 				std::cout << "You have nothing in cart! Buy something first!" << std::endl;
 				break;
 			}
+
 			cpen333::process::socket socket("localhost", PORT_NUMBER1);
 			std::cout << "Client connecting...";
 			std::cout.flush();
 			if (socket.open()) {
-				std::this_thread::sleep_for(std::chrono::seconds(2));
+				//std::this_thread::sleep_for(std::chrono::seconds(2));
 				std::cout << "connected." << std::endl;
 				std::string orderStr = database.orders[client_id]->orderToString();
 				int size = orderStr.size();
