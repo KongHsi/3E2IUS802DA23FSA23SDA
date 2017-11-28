@@ -58,7 +58,7 @@ int main() {
 				int success;
 				socket.read(&success, sizeof(success));
 				if (success == 1) {
-					std::cout << "Your order has been received!" << std::endl;
+					std::cout << "Your order has been Reserved!" << std::endl;
 				}
 				else {
 					std::cout << "Something wrong" << std::endl;
@@ -67,6 +67,14 @@ int main() {
 			else if (cmd == CLIENT_ORDER) {
 				request = 3;
 				socket.write(&request, sizeof(request));
+				int success;
+				socket.read(&success, sizeof(success));
+				if (success == 1) {
+					std::cout << "Your Order has been placed!" << std::endl;
+				}
+				else {
+					std::cout << "Oh no, something went wrong!" << std::endl;
+				}
 			}
 			else if (cmd == CLIENT_QUIT) {
 				request = 0;

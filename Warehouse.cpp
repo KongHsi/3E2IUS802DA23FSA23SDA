@@ -10,8 +10,19 @@
 #include <cpen333/process/socket.h>
 #include <cpen333/process/mutex.h>
 
-void service_warehouse(int id_warehouse) {
+void service_warehouse(int id_warehouse, cpen333::process::socket client_warehouse) {
 	std::cout << "Client " << id_warehouse << " connected" << std::endl;
+
+	int size;
+	client_warehouse.read(&size, sizeof(size));
+	char cstr[200];
+	client_warehouse.read(cstr, size);
+	cstr[size] = '\0';
+	for (int i = 0; i < size; i++) {
+		std::cout << cstr[i];
+	}
+	int received = 1;
+	client_warehouse.write(&received, sizeof(received));
 }
 
 int main() {
@@ -33,7 +44,7 @@ int main() {
 	cpen333::process::socket client_warehouse;
 	int id_warehouse = 0;
 	while (server_warehouse.accept(client_warehouse)) {
-		std::thread thread(service_warehouse, id_warehouse++);
+		std::thread thread(service_warehouse, id_warehouse++, std::move(client_warehouse));
 		thread.detach();
 	}
 	// close server

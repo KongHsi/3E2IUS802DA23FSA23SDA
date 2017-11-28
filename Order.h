@@ -19,6 +19,23 @@ public:
 		}
 	}
 
+	std::string orderToString() {
+		std::string str;
+		str.append(std::to_string(id));
+		str.append("\n");
+		str.append(std::to_string(userID));
+		str.append("\n");
+		str.append(std::to_string(orders.size()));
+		str.append("\n");
+		for (std::map<std::string, int>::iterator iterator = orders.begin(); iterator != orders.end(); iterator++) {
+			str.append(iterator->first);
+			str.append("\n");
+			str.append(std::to_string(iterator->second));
+			str.append("\n");
+		}
+		return str;
+	}
+
 };
 
 #endif

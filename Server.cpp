@@ -66,17 +66,34 @@ void service(int client_id, cpen333::process::socket client, Database& database)
 			client.write(&success, sizeof(success));
 		}
 		else if (id == CLIENT_ORDER_SERVER) {
-			std::cout << "request make an order" << std::endl;
-
-			//TODO
-			/*
-			cpen333::process::socket socket("localhost", 52103);
+			std::cout << "Request make an order" << std::endl;
+			if (database.orders.find(client_id) == database.orders.end()) {
+				std::cout << "You have nothing in cart! Buy something first!" << std::endl;
+				break;
+			}
+			cpen333::process::socket socket("localhost", PORT_NUMBER1);
 			std::cout << "Client connecting...";
 			std::cout.flush();
 			if (socket.open()) {
-				std::cout << "ihihihhih";
+				std::this_thread::sleep_for(std::chrono::seconds(2));
+				std::cout << "connected." << std::endl;
+				std::string orderStr = database.orders[client_id]->orderToString();
+				int size = orderStr.size();
+				socket.write(&size, sizeof(size));
+				const char *cstr = orderStr.c_str();
+				socket.write(cstr, size);
+				int success;
+				socket.read(&success, sizeof(success));
+				if (success == 1) {
+					std::cout << "Order placed!" << std::endl;
+					database.orders.erase(client_id);
+				}
+				else {
+					std::cout << "Order not placed" << std::endl;
+				}
+				client.write(&success, sizeof(success));
 			}
-			*/
+			
 		}
 	} while (id != CLIENT_QUIT_SERVER);
 }
