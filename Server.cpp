@@ -9,6 +9,7 @@
 #include "Constants.h"
 #include <cpen333/process/socket.h>
 #include <cpen333/process/mutex.h>
+#include "Order.h"
 
 void service(int client_id, cpen333::process::socket client, Database& database) {
 	cpen333::process::mutex mutex(DATABASE_MUTEX);
@@ -17,7 +18,7 @@ void service(int client_id, cpen333::process::socket client, Database& database)
 	do {
 		client.read(&id, sizeof(int));
 		if (id == CLIENT_VIEW_SERVER) {
-			std::cout << "request view products" << std::endl;
+			std::cout << "Request view products" << std::endl;
 			std::string str = database.databaseToString();
 			int size = str.size();
 			client.write(&size, sizeof(size));
@@ -25,7 +26,7 @@ void service(int client_id, cpen333::process::socket client, Database& database)
 			client.write(cstr, size);
 		}
 		else if (id == CLIENT_RESERVE_SERVER) {
-			std::cout << "request reserve an order" << std::endl;
+			std::cout << "Request reserve an order" << std::endl;
 			int UOsize;
 			client.read(&UOsize, sizeof(UOsize));
 			char cstr[50];
@@ -45,18 +46,38 @@ void service(int client_id, cpen333::process::socket client, Database& database)
 				else {
 					database.database[str]->number -= orderCount;
 					database.printDatabase();
-					cpen333::process::socket socket("localhost", 52103);
-					std::cout << "Client connecting...";
-					std::cout.flush();
-					if (socket.open()) {
-						std::cout << "ihihihhih";
+					if (database.orders.find(client_id) == database.orders.end()) {
+						database.createOrder(client_id, str, orderCount);
+						std::cout << "--------------------------------------------------" << std::endl;;
+						std::cout << "Created order: " << database.orders[client_id]->id
+							<< " User id: " << database.orders[client_id]->userID << std::endl;
+						database.orders[client_id]->printOrder();
+					}
+					else {
+						database.updateOrder(client_id, str, orderCount);
+						std::cout << "--------------------------------------------------" << std::endl;;
+						std::cout << "Update order: " << database.orders[client_id]->id
+							<< " User id: " << database.orders[client_id]->userID << std::endl;
+						database.orders[client_id]->printOrder();
 					}
 				}
+				
 			}
 			client.write(&success, sizeof(success));
 		}
-		else if (id == CLIENT_ORDER_SERVER)
+		else if (id == CLIENT_ORDER_SERVER) {
 			std::cout << "request make an order" << std::endl;
+
+			//TODO
+			/*
+			cpen333::process::socket socket("localhost", 52103);
+			std::cout << "Client connecting...";
+			std::cout.flush();
+			if (socket.open()) {
+				std::cout << "ihihihhih";
+			}
+			*/
+		}
 	} while (id != CLIENT_QUIT_SERVER);
 }
 

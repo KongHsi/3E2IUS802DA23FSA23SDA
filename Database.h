@@ -4,10 +4,29 @@
 #include <map>
 #include "Constants.h"
 #include "Item.h"
+#include "Order.h"
 
 class Database {
+	private:
+		int orderIDCount = 0;
 	public:
 		std::map<std::string, Item*> database;
+		std::map<int, Order*> orders;
+		
+		void createOrder(int id, std::string item, int count) {
+			Order* order = new Order(orderIDCount++, id);
+			order->orders[item] = count;
+			orders[id] = order;
+		}
+
+		void updateOrder(int id, std::string item, int count) {
+			if (orders[id]->orders.find(item) == orders[id]->orders.end()) {
+				orders[id]->orders[item] = count;
+			}
+			else {
+				orders[id]->orders[item] += count;
+			}
+		}
 
 		Database(void) {
 			std::cout << "Initializing database.\n" << std::endl;
@@ -41,11 +60,13 @@ class Database {
 		}
 
 		void printDatabase() {
+			std::cout << "--------------------------------------------------" << std::endl;;
 			for (std::map<std::string, Item*>::iterator iterator = database.begin(); iterator != database.end(); iterator++) {
 				Item* item = iterator->second;
 				std::cout << "Item name: " << item->name << ", "
 					<< "Number:  " << item->number << ", "
 					<< "Warehouse: " << item->warehouse << std::endl;
 			}
+			std::cout << "--------------------------------------------------" << std::endl;;
 		}
 };

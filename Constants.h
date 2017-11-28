@@ -13,6 +13,8 @@
 #define CLIENT_ORDER_SERVER 3
 #define CLIENT_QUIT_SERVER 0
 #define PORT_NUMBER 52102
+#define PORT_NUMBER1 52103
+#define PORT_NUMBER2 52104
 #define DATABASE_MUTEX "database_mutex"
 
 #define ITEMS_INITIALIZATION_FILE "data/items_initialization_file.txt"

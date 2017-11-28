@@ -19,7 +19,15 @@ int main() {
 	std::cout << "--------------AmaZOOM warehouse log in--------------" << std::endl;
 	std::cout << "Please input warehouse ID: " << std::endl;
 	std::cin >> warehouseID;
-	cpen333::process::socket_server server_warehouse(52103);
+	int warehouse_port_number;
+	switch (warehouseID) {
+		case 1:
+			warehouse_port_number = PORT_NUMBER1;
+			break;
+		default:
+			warehouse_port_number = PORT_NUMBER2;
+	}
+	cpen333::process::socket_server server_warehouse(warehouse_port_number);
 	server_warehouse.open();
 	std::cout << "Server started on port " << server_warehouse.port() << std::endl;
 	cpen333::process::socket client_warehouse;
