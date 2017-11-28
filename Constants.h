@@ -17,4 +17,6 @@
 
 #define ITEMS_INITIALIZATION_FILE "data/items_initialization_file.txt"
 
+#define WAREHOUSE_MEMORY "warehouse_memory"
+
 #endif

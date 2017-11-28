@@ -45,6 +45,12 @@ void service(int client_id, cpen333::process::socket client, Database& database)
 				else {
 					database.database[str]->number -= orderCount;
 					database.printDatabase();
+					cpen333::process::socket socket("localhost", 52103);
+					std::cout << "Client connecting...";
+					std::cout.flush();
+					if (socket.open()) {
+						std::cout << "ihihihhih";
+					}
 				}
 			}
 			client.write(&success, sizeof(success));
@@ -54,12 +60,13 @@ void service(int client_id, cpen333::process::socket client, Database& database)
 	} while (id != CLIENT_QUIT_SERVER);
 }
 
+
+
 int main() {
 
 	// start server
 	cpen333::process::socket_server server(PORT_NUMBER);
 	server.open();
-
 	std::cout << "Server started on port " << server.port() << std::endl;
 	cpen333::process::socket client;
 	int id = 0;
@@ -68,7 +75,6 @@ int main() {
 		std::thread thread(service, id++, std::move(client), std::ref(database));
 		thread.detach();
 	}
-
 	// close server
 	server.close();
 	return 0;
