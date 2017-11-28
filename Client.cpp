@@ -45,7 +45,7 @@ int main() {
 			else if (cmd == CLIENT_RESERVE) {
 				request = 2;
 				socket.write(&request, sizeof(request));
-				std::cout << "OK, what do you want?" << std::endl;
+				std::cout << "OK, what do you want to reserve?" << std::endl;
 				std::cout << "Please input in the format of ""NAME"" + ""NUMBER""" << std::endl;
 				std::string userOrder;
 				int userOrderNumber;

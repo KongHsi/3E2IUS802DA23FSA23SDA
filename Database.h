@@ -22,12 +22,10 @@ class Database {
 					fin.getline(warehouseNumber, 10);
 					std::string str(buffer);
 					Item* item = new Item(str, atoi(number), atoi(warehouseNumber));
-					std::cout << "Item name: " << item->name << ", " 
-						<< "Number:  "<< item->number << ", "
-						<< "Warehouse: " <<item->warehouse << std::endl;
 					database[str] = item;
 				}
 			}
+			printDatabase();
 		}
 
 		std::string databaseToString() {
@@ -40,5 +38,14 @@ class Database {
 				str.append("\n");
 			}
 			return str;
+		}
+
+		void printDatabase() {
+			for (std::map<std::string, Item*>::iterator iterator = database.begin(); iterator != database.end(); iterator++) {
+				Item* item = iterator->second;
+				std::cout << "Item name: " << item->name << ", "
+					<< "Number:  " << item->number << ", "
+					<< "Warehouse: " << item->warehouse << std::endl;
+			}
 		}
 };

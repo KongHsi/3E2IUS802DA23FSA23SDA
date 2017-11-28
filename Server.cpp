@@ -11,6 +11,7 @@
 #include <cpen333/process/mutex.h>
 
 void service(int client_id, cpen333::process::socket client, Database& database) {
+	cpen333::process::mutex mutex(DATABASE_MUTEX);
 	std::cout << "Client " << client_id << " connected" << std::endl;
 	int id = 0;
 	do {
@@ -31,10 +32,21 @@ void service(int client_id, cpen333::process::socket client, Database& database)
 			client.read(cstr, UOsize);
 			int orderCount;
 			client.read(&orderCount, sizeof(orderCount));
-			for (int i = 0; i < UOsize; i++) 
-				std::cout << cstr[i];
+			cstr[UOsize] = '\0';
+			std::string str(cstr);
+			std::cout << str;
 			std::cout << " " << orderCount << std::endl;
 			int success = 1;
+			{
+				std::lock_guard<cpen333::process::mutex> lock(mutex);
+				if(database.database.find(str) == database.database.end()
+					|| database.database[str]->number < orderCount)
+					success = 0;
+				else {
+					database.database[str]->number -= orderCount;
+					database.printDatabase();
+				}
+			}
 			client.write(&success, sizeof(success));
 		}
 		else if (id == CLIENT_ORDER_SERVER)
