@@ -103,7 +103,6 @@ void service(int client_id, cpen333::process::socket client, Database& database)
 
 
 int main() {
-
 	// start server
 	cpen333::process::socket_server server(PORT_NUMBER);
 	server.open();

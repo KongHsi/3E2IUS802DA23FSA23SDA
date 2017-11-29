@@ -10,10 +10,14 @@
 #include "Order.h"
 #include "WarehouseDatabase.h"
 #include <cpen333/process/socket.h>
+#include <cpen333/process/shared_memory.h>
 #include <cpen333/process/mutex.h>
 #include "Robot.h"
 #include "DynamicQueue.h"
 #include "safe_printf.h"
+#include "map_common.h"
+
+
 
 void service_warehouse(int id_warehouse, cpen333::process::socket client_warehouse, WarehouseDatabase warehouseDatabase) {
 	std::cout << "Client " << id_warehouse << " connected" << std::endl;
@@ -40,7 +44,6 @@ void service_warehouse(int id_warehouse, cpen333::process::socket client_warehou
 }
 
 void main_thread(int warehouseID, WarehouseDatabase warehouseDatabase) {
-	
 	//create robots
 	std::vector<Robot*> robots;
 	const int nrobots = 6;
@@ -51,10 +54,43 @@ void main_thread(int warehouseID, WarehouseDatabase warehouseDatabase) {
 	for (auto& robot : robots) {
 		robot->start();
 	}
-
 	for (auto& robot : robots) {
 		robot->join();
 	}
+}
+
+void initializeMap(int warehouseID, MapInfo& minfo) {
+
+	minfo.rows = 0;
+	minfo.cols = 0;
+	std::string map_file;
+	switch (warehouseID) {
+	case 1:
+		map_file = MAP_INITIALIZATION_FILEA;
+		break;
+	default:
+		map_file = MAP_INITIALIZATION_FILEB;
+	}
+	std::ifstream fin(map_file);
+	std::string line;
+	if (fin.is_open()) {
+		int row = 0;
+		while (std::getline(fin, line)) {
+			int cols = line.length();
+			if (cols > 0) {
+				if (cols > minfo.cols) {
+					minfo.cols = cols;
+				}
+				for (size_t col = 0; col<cols; ++col) {
+					minfo.map[col][row] = line[col];
+				}
+				++row;
+			}
+		}
+		minfo.rows = row;
+		fin.close();
+	}
+	
 
 }
 
@@ -65,9 +101,17 @@ int main() {
 	std::cin >> warehouseID;
 
 	WarehouseDatabase warehouseDatabase(warehouseID);
+	//initialize map
+	cpen333::process::shared_object<SharedData> memory(MAP_MEMORY_NAME);
+	initializeMap(warehouseID, memory->minfo);
+	memory->magic = 11;
+	memory->quit = false;
+
+
 	//initialize main thread
 	std::thread thread(main_thread, warehouseID, std::ref(warehouseDatabase));
 	thread.detach();
+	std::this_thread::sleep_for(std::chrono::seconds(5));
 
 	int warehouse_port_number;
 	switch (warehouseID) {

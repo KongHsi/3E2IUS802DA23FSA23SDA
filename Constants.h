@@ -21,5 +21,7 @@
 #define WAREHOUSE_MEMORY "warehouse_memory"
 #define WAREHOUSE_INITIALIZATION_FILEA "data/warehouse_initialization_fileA.txt"
 #define WAREHOUSE_INITIALIZATION_FILEB "data/warehouse_initialization_fileB.txt"
+#define MAP_INITIALIZATION_FILEA "data/map_initialization_fileA.txt"
+#define MAP_INITIALIZATION_FILEB "data/map_initialization_fileB.txt"
 
 #endif
