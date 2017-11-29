@@ -11,8 +11,11 @@
 #include "WarehouseDatabase.h"
 #include <cpen333/process/socket.h>
 #include <cpen333/process/mutex.h>
+#include "Robot.h"
+#include "DynamicQueue.h"
+#include "safe_printf.h"
 
-void service_warehouse(int id_warehouse, cpen333::process::socket client_warehouse) {
+void service_warehouse(int id_warehouse, cpen333::process::socket client_warehouse, WarehouseDatabase warehouseDatabase) {
 	std::cout << "Client " << id_warehouse << " connected" << std::endl;
 
 	int size;
@@ -24,11 +27,35 @@ void service_warehouse(int id_warehouse, cpen333::process::socket client_warehou
 	client_warehouse.write(&received, sizeof(received));
 	Order order(cstr);
 	order.printOrder();
+	for (std::map<std::string, int>::iterator iterator = order.orders.begin(); iterator != order.orders.end(); iterator++) {
+		warehouseDatabase.warehouseDatabase[iterator->first]->count -= iterator->second;
+		for (int i = 0; i < iterator->second; i++) {
+			Location* loc = warehouseDatabase.warehouseDatabase[iterator->first]->locations.back();
+			warehouseDatabase.warehouseDatabase[iterator->first]->locations.pop_back();
+			Task* task = new Task(*loc, 1); //TODO: delivery dock
+			warehouseDatabase.taskQueue->add(task);
+		}
+	}
+
 }
 
-void main_thread(int warehouseID) {
-	std::this_thread::sleep_for(std::chrono::seconds(1)); // let connection starts first
-	WarehouseDatabase warehouseDatabase(warehouseID);
+void main_thread(int warehouseID, WarehouseDatabase warehouseDatabase) {
+	
+	//create robots
+	std::vector<Robot*> robots;
+	const int nrobots = 6;
+	
+	for (int i = 0; i < nrobots; i++) {
+		robots.push_back(new Robot(i, warehouseDatabase.taskQueue));
+	}
+	for (auto& robot : robots) {
+		robot->start();
+	}
+
+	for (auto& robot : robots) {
+		robot->join();
+	}
+
 }
 
 int main() {
@@ -37,8 +64,9 @@ int main() {
 	std::cout << "Please input warehouse ID: " << std::endl;
 	std::cin >> warehouseID;
 
+	WarehouseDatabase warehouseDatabase(warehouseID);
 	//initialize main thread
-	std::thread thread(main_thread, warehouseID);
+	std::thread thread(main_thread, warehouseID, std::ref(warehouseDatabase));
 	thread.detach();
 
 	int warehouse_port_number;
@@ -51,10 +79,10 @@ int main() {
 	}
 	cpen333::process::socket_server server_warehouse(warehouse_port_number);
 	server_warehouse.open();
-	std::cout << "Server started on port " << server_warehouse.port() << std::endl;
+	safe_printf( "Server started on port %d.\n" ,server_warehouse.port());
 	cpen333::process::socket client_warehouse;
 	while (server_warehouse.accept(client_warehouse)) {
-		std::thread thread(service_warehouse, warehouseID, std::move(client_warehouse));
+		std::thread thread(service_warehouse, warehouseID, std::move(client_warehouse), std::ref(warehouseDatabase));
 		thread.detach();
 	}
 	// close server

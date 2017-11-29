@@ -6,6 +6,7 @@
 #include "Constants.h"
 #include "Inventory.h"
 #include "Location.h"
+#include "DynamicQueue.h"
 
 class WarehouseDatabase {
 	public:
@@ -13,9 +14,11 @@ class WarehouseDatabase {
 		int rows;
 		int levels;
 		std::map<std::string, Inventory*> warehouseDatabase;
+		DynamicQueue* taskQueue;
 		bool locations[20][20][10]; //current max cols*rows*levels is 20*20*10
 
 		WarehouseDatabase(int warehouse_id) {
+			taskQueue = new DynamicQueue();
 			std::cout << "Initializing warehouse database.\n" << std::endl;
 			std::string layout_initialization_file;
 			switch (warehouse_id) {
