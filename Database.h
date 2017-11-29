@@ -1,3 +1,6 @@
+#ifndef DATABASE_H
+#define DATABASE_H
+
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -70,3 +73,5 @@ class Database {
 			std::cout << "--------------------------------------------------" << std::endl;;
 		}
 };
+
+#endif

@@ -1,7 +1,6 @@
 #ifndef AMAZON_CONSTANTS_H
 #define AMAZON_CONSTANTS_H
 
-
 //constants
 #define CLIENT_VIEW '1'
 #define CLIENT_RESERVE '2'
@@ -20,5 +19,7 @@
 #define ITEMS_INITIALIZATION_FILE "data/items_initialization_file.txt"
 
 #define WAREHOUSE_MEMORY "warehouse_memory"
+#define WAREHOUSE_INITIALIZATION_FILEA "data/warehouse_initialization_fileA.txt"
+#define WAREHOUSE_INITIALIZATION_FILEB "data/warehouse_initialization_fileB.txt"
 
 #endif

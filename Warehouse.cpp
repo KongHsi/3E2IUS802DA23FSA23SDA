@@ -8,6 +8,7 @@
 #include "Database.h"
 #include "Constants.h"
 #include "Order.h"
+#include "WarehouseDatabase.h"
 #include <cpen333/process/socket.h>
 #include <cpen333/process/mutex.h>
 
@@ -25,11 +26,21 @@ void service_warehouse(int id_warehouse, cpen333::process::socket client_warehou
 	order.printOrder();
 }
 
+void main_thread(int warehouseID) {
+	std::this_thread::sleep_for(std::chrono::seconds(1)); // let connection starts first
+	WarehouseDatabase warehouseDatabase(warehouseID);
+}
+
 int main() {
 	int warehouseID;
 	std::cout << "--------------AmaZOOM warehouse log in--------------" << std::endl;
 	std::cout << "Please input warehouse ID: " << std::endl;
 	std::cin >> warehouseID;
+
+	//initialize main thread
+	std::thread thread(main_thread, warehouseID);
+	thread.detach();
+
 	int warehouse_port_number;
 	switch (warehouseID) {
 		case 1:
@@ -42,9 +53,8 @@ int main() {
 	server_warehouse.open();
 	std::cout << "Server started on port " << server_warehouse.port() << std::endl;
 	cpen333::process::socket client_warehouse;
-	int id_warehouse = 0;
 	while (server_warehouse.accept(client_warehouse)) {
-		std::thread thread(service_warehouse, id_warehouse++, std::move(client_warehouse));
+		std::thread thread(service_warehouse, warehouseID, std::move(client_warehouse));
 		thread.detach();
 	}
 	// close server
