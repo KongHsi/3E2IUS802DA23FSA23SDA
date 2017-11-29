@@ -1,4 +1,4 @@
-#include "map_common.h"
+﻿#include "map_common.h"
 #include "Constants.h"
 #include <cpen333/process/shared_memory.h>
 #include <cpen333/process/mutex.h>
@@ -7,7 +7,7 @@
 #include <thread>
 #include <chrono>
 
-class MazeUI {
+class MapUI {
 	// display offset for better visibility
 	static const int XOFF = 2;
 	static const int YOFF = 1;
@@ -19,7 +19,7 @@ class MazeUI {
 	int exit_[2];   // exit location
 
 public:
-	MazeUI() : display_(), memory_(MAP_MEMORY_NAME), mutex_(MAP_MUTEX_NAME) {
+	MapUI() : display_(), memory_(MAP_MEMORY_NAME), mutex_(MAP_MUTEX_NAME) {
 		// clear display and hide cursor
 		display_.clear_all();
 		display_.set_cursor_visible(false);
@@ -40,14 +40,11 @@ public:
 		exit_[ROW_IDX] = -1;
 	}
 
-	void draw_maze() {
-
+	void draw_map() {
 		MapInfo& minfo = memory_->minfo;
 		RobotInfo& rinfo = memory_->rinfo;
-
 		// clear display
 		display_.clear_display();
-		// draw maze
 		for (int r = 0; r < minfo.rows; ++r) {
 			display_.set_cursor_position(YOFF + r, XOFF);
 			for (int c = 0; c < minfo.cols; ++c) {
@@ -71,24 +68,62 @@ public:
 		}
 		fflush(stdout);  // force output buffer to flush 
 	}
+
+	void draw_robots() {
+		RobotInfo& rinfo = memory_->rinfo;
+		// draw all runner locations
+		mutex_.lock();
+		for (size_t i = 0; i<rinfo.nrobots; ++i) {
+			char me = 'R';//'A' + i;
+			int newr = rinfo.rloc[i][ROW_IDX];
+			int newc = rinfo.rloc[i][COL_IDX];
+			// if not already at the exit...
+			if (rinfo.rInMap[i]) {
+				if (newc != lastpos_[i][COL_IDX]
+					|| newr != lastpos_[i][ROW_IDX]) {
+					// zero out last spot and update known location
+					display_.set_cursor_position(YOFF + lastpos_[i][ROW_IDX], XOFF + lastpos_[i][COL_IDX]);
+					std::printf("%c", EMPTY_CHAR);
+					lastpos_[i][COL_IDX] = newc;
+					lastpos_[i][ROW_IDX] = newr;
+				}
+				display_.set_cursor_position(YOFF + newr, XOFF + newc);
+				std::printf("%c", me);
+			}
+			else {
+				// erase old position if now finished
+				if (lastpos_[i][COL_IDX] != exit_[COL_IDX] || lastpos_[i][ROW_IDX] != exit_[ROW_IDX]) {
+					display_.set_cursor_position(YOFF + lastpos_[i][ROW_IDX], XOFF + lastpos_[i][COL_IDX]);
+					std::printf("%c", EMPTY_CHAR);
+					lastpos_[i][COL_IDX] = newc;
+					lastpos_[i][ROW_IDX] = newr;
+					// display a completion message
+					display_.set_cursor_position(YOFF, XOFF + memory_->minfo.cols + 2);
+					//std::printf("robot %c completed!!", me);
+				}
+			}
+		}
+		fflush(stdout);  // force output buffer to flush
+		mutex_.unlock();
+	}
+
+
+
 };
 
 int main() {
-
 	cpen333::process::shared_object<SharedData> memory(MAP_MEMORY_NAME);
-	
 	if (memory->magic != 11) {
 		std::cout << "error";
 		return 0;
 	}
-
 	//initialize previous locations of characters
-	MazeUI ui;
-	ui.draw_maze();
+	MapUI ui;
+	ui.draw_map();
 	// continue looping until main program has quit
 	while (!memory->quit) {
-		//ui.draw_runners();
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		ui.draw_robots();
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
 	return 0;
 }

@@ -16,6 +16,8 @@
 #define MAX_MAP_SIZE 50
 #define MAX_ROBOTS  20
 
+#define NROBOTS 6
+
 struct MapInfo {
 	int rows;           // rows in map
 	int cols;           // columns in map
@@ -26,6 +28,7 @@ struct RobotInfo {
 	int nrobots;      // number robots
 	int rloc[MAX_ROBOTS][2];   // robot locations [col][row]
 	int sloc[MAX_ROBOTS][2]; // robot go to shelf loc
+	bool rInMap[MAX_ROBOTS];
 };
 
 struct SharedData {

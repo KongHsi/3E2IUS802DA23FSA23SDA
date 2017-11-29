@@ -29,8 +29,10 @@ void service_warehouse(int id_warehouse, cpen333::process::socket client_warehou
 	cstr[size] = '\0';
 	int received = 1;
 	client_warehouse.write(&received, sizeof(received));
+	
 	Order order(cstr);
 	order.printOrder();
+	
 	for (std::map<std::string, int>::iterator iterator = order.orders.begin(); iterator != order.orders.end(); iterator++) {
 		warehouseDatabase.warehouseDatabase[iterator->first]->count -= iterator->second;
 		for (int i = 0; i < iterator->second; i++) {
@@ -40,13 +42,14 @@ void service_warehouse(int id_warehouse, cpen333::process::socket client_warehou
 			warehouseDatabase.taskQueue->add(task);
 		}
 	}
+	
 
 }
 
 void main_thread(int warehouseID, WarehouseDatabase warehouseDatabase) {
 	//create robots
 	std::vector<Robot*> robots;
-	const int nrobots = 6;
+	const int nrobots = NROBOTS;
 	
 	for (int i = 0; i < nrobots; i++) {
 		robots.push_back(new Robot(i, warehouseDatabase.taskQueue));
@@ -59,7 +62,7 @@ void main_thread(int warehouseID, WarehouseDatabase warehouseDatabase) {
 	}
 }
 
-void initializeMap(int warehouseID, MapInfo& minfo) {
+void initializeMap(int warehouseID, MapInfo& minfo, RobotInfo& rinfo) {
 
 	minfo.rows = 0;
 	minfo.cols = 0;
@@ -91,6 +94,12 @@ void initializeMap(int warehouseID, MapInfo& minfo) {
 		fin.close();
 	}
 	
+	rinfo.nrobots = NROBOTS;
+	for (int i = 0; i < rinfo.nrobots; i++) {
+		rinfo.rloc[i][COL_IDX] = -1;
+		rinfo.rloc[i][ROW_IDX] = -1;
+		rinfo.rInMap[i] = false;
+	}
 
 }
 
@@ -103,7 +112,7 @@ int main() {
 	WarehouseDatabase warehouseDatabase(warehouseID);
 	//initialize map
 	cpen333::process::shared_object<SharedData> memory(MAP_MEMORY_NAME);
-	initializeMap(warehouseID, memory->minfo);
+	initializeMap(warehouseID, memory->minfo, memory->rinfo);
 	memory->magic = 11;
 	memory->quit = false;
 

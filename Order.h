@@ -39,6 +39,7 @@ public:
 			while (*(in) != '\n') count_arr[index++] = *in++;
 			count_arr[index] = '\0';
 			orders[std::string(item_arr)] = atoi(count_arr);
+			in++;
 		}
 	}
 	
