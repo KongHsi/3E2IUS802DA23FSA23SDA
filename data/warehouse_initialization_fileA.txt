@@ -1,0 +1,11 @@
+4
+6
+5
+FISH
+3
+BOTTLE_WATER
+2
+CAKE
+2
+BEEF
+4
