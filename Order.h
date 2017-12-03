@@ -11,8 +11,12 @@ public:
 	int userID;
 	std::map<std::string, int> orders;
 	Order(int id, int userID) : id(id), userID(userID) {}
+	// status = 0 created
+	// status = 1 in process
+	// status = 2 completed
+	int status;
 
-	Order(char* in) {
+	Order(char* in, int status = 0) {
 		int index = 0;
 		char id_arr[2];
 		while (*(in) != '\n') id_arr[index++] = *in++;
@@ -41,13 +45,17 @@ public:
 			orders[std::string(item_arr)] = atoi(count_arr);
 			in++;
 		}
+		//status = status;
 	}
 	
 	void printOrder() {
+		std::cout << "--------------------------------------------------" << std::endl;
+		std::cout << "Order ID: " << id << std::endl;
+		std::cout << "User ID: " << userID << std::endl;
 		for (std::map<std::string, int>::iterator iterator = orders.begin(); iterator != orders.end(); iterator++) {
 			std::cout << "Item: " << iterator->first << " Quantity: " << iterator->second << std::endl;
-			std::cout << "--------------------------------------------------" << std::endl;;
 		}
+		std::cout << "--------------------------------------------------" << std::endl;
 	}
 
 	std::string orderToString() {

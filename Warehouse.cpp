@@ -19,8 +19,8 @@
 
 
 
-void service_warehouse(int id_warehouse, cpen333::process::socket client_warehouse, WarehouseDatabase warehouseDatabase) {
-	std::cout << "Client " << id_warehouse << " connected" << std::endl;
+void service_warehouse(int id_warehouse, cpen333::process::socket client_warehouse, WarehouseDatabase& warehouseDatabase) {
+	std::cout << "Web Server " << id_warehouse << " connected" << std::endl;
 
 	int size;
 	client_warehouse.read(&size, sizeof(size));
@@ -30,9 +30,9 @@ void service_warehouse(int id_warehouse, cpen333::process::socket client_warehou
 	int received = 1;
 	client_warehouse.write(&received, sizeof(received));
 	
-	Order order(cstr);
+	Order order = warehouseDatabase.addOrder(cstr);
 	order.printOrder();
-	
+
 	for (std::map<std::string, int>::iterator iterator = order.orders.begin(); iterator != order.orders.end(); iterator++) {
 		warehouseDatabase.warehouseDatabase[iterator->first]->count -= iterator->second;
 		for (int i = 0; i < iterator->second; i++) {
@@ -42,18 +42,56 @@ void service_warehouse(int id_warehouse, cpen333::process::socket client_warehou
 			warehouseDatabase.taskQueue->add(task);
 		}
 	}
-	
-
 }
 
-void main_thread(int warehouseID, WarehouseDatabase warehouseDatabase) {
+void print_menu() {
+	std::cout << "=========================================" << std::endl;
+	std::cout << "=                  MENU                 =" << std::endl;
+	std::cout << "=========================================" << std::endl;
+	std::cout << " (1) View products and stock availability" << std::endl;
+	std::cout << " (2) View orders" << std::endl;
+	std::cout << " (0) Quit" << std::endl;
+	std::cout << "=========================================" << std::endl;
+	std::cout << "Enter number: ";
+	std::cout.flush();
+}
+
+void manager_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
+	cpen333::process::mutex mutex(WAREHOUSE_PRINT_MUTEX);
+	{
+		std::lock_guard<cpen333::process::mutex> lock(mutex);
+		print_menu();
+	}
+	char cmd = 0;
+	while (cmd != MANAGERQUIT) {
+		std::cin >> cmd;
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		if (cmd == MANAGER_VIEW_STOCK) {
+			{
+				std::lock_guard<cpen333::process::mutex> lock(mutex);
+				warehouseDatabase.printDatabase();
+			}
+		}
+		else if (cmd == MANAGER_VIEW_ORDER) {
+			{
+				std::lock_guard<cpen333::process::mutex> lock(mutex);
+				warehouseDatabase.printOrders();
+			}
+		}
+		else {
+			safe_printf("Command is not vaild\n");
+		}
+	}
+}
+
+void main_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
 	//create robots
 	std::vector<Robot*> robots;
 	const int nrobots = NROBOTS;
-	
 	for (int i = 0; i < nrobots; i++) {
 		robots.push_back(new Robot(i, warehouseDatabase.taskQueue));
 	}
+	
 	for (auto& robot : robots) {
 		robot->start();
 	}
@@ -105,9 +143,13 @@ void initializeMap(int warehouseID, MapInfo& minfo, RobotInfo& rinfo) {
 
 int main() {
 	int warehouseID;
-	std::cout << "--------------AmaZOOM warehouse log in--------------" << std::endl;
-	std::cout << "Please input warehouse ID: " << std::endl;
-	std::cin >> warehouseID;
+	cpen333::process::mutex mutex(WAREHOUSE_PRINT_MUTEX);
+	{
+		std::lock_guard<cpen333::process::mutex> lock(mutex);
+		std::cout << "--------------AmaZOOM warehouse log in--------------" << std::endl;
+		std::cout << "Please input warehouse ID: " << std::endl;
+		std::cin >> warehouseID;
+	}
 
 	WarehouseDatabase warehouseDatabase(warehouseID);
 	//initialize map
@@ -118,9 +160,12 @@ int main() {
 
 
 	//initialize main thread
-	std::thread thread(main_thread, warehouseID, std::ref(warehouseDatabase));
-	thread.detach();
-	std::this_thread::sleep_for(std::chrono::seconds(5));
+	std::thread thread_main(main_thread, warehouseID, std::ref(warehouseDatabase));
+	thread_main.detach();
+
+	std::thread thread_manager(manager_thread, warehouseID, std::ref(warehouseDatabase));
+	thread_manager.detach();
+	std::this_thread::sleep_for(std::chrono::seconds(2));
 
 	int warehouse_port_number;
 	switch (warehouseID) {

@@ -7,6 +7,8 @@
 #include "DynamicQueue.h"
 #include "safe_printf.h"
 #include "map_common.h"
+#include <cpen333/process/mutex.h>
+#include "Constants.h"
 
 class MapRobot {
 
@@ -124,8 +126,13 @@ public:
 	Robot(int id, DynamicQueue* tasks) :
 		id(id), tasks(tasks) {}
 
+
 	int main() {
-		safe_printf("Robot %d started\n", id);
+		cpen333::process::mutex mutex(WAREHOUSE_PRINT_MUTEX);
+		{
+			std::lock_guard<cpen333::process::mutex> lock(mutex);
+			safe_printf("Robot %d started\n", id);
+		}
 
 		
 		while (true) {

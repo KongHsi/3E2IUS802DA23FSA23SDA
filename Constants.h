@@ -7,6 +7,11 @@
 #define CLIENT_ORDER '3'
 #define CLIENT_QUIT '0'
 
+#define MANAGER_VIEW_STOCK '1'
+#define MANAGER_VIEW_ORDER '2'
+#define MANAGERQUIT '0'
+#define WAREHOUSE_PRINT_MUTEX "warehouse_print_mutex"
+
 #define CLIENT_VIEW_SERVER 1
 #define CLIENT_RESERVE_SERVER 2
 #define CLIENT_ORDER_SERVER 3

@@ -7,6 +7,7 @@
 #include "Inventory.h"
 #include "Location.h"
 #include "DynamicQueue.h"
+#include "Order.h"
 
 class WarehouseDatabase {
 	public:
@@ -14,10 +15,11 @@ class WarehouseDatabase {
 		int rows;
 		int levels;
 		std::map<std::string, Inventory*> warehouseDatabase;
+		std::vector<Order> orders;
 		DynamicQueue* taskQueue;
 		bool locations[20][20][10]; //current max cols*rows*levels is 20*20*10
 
-		WarehouseDatabase(int warehouse_id) {
+		WarehouseDatabase(int warehouse_id) : orders() {
 			taskQueue = new DynamicQueue();
 			std::cout << "Initializing warehouse database.\n" << std::endl;
 			std::string layout_initialization_file;
@@ -65,9 +67,24 @@ class WarehouseDatabase {
 			printDatabase();
 		}
 
+		Order addOrder(char* str) {
+			Order order(str);
+			orders.push_back(order);
+			return order;
+		}
+
+		void printOrders() {
+			std::cout << "--------------------------------------------------" << std::endl;
+			std::cout << "Hi, Here are all the orders:" << std::endl;
+			for (int i = 0; i < orders.size(); i++) {
+				orders[i].printOrder();
+			}
+			std::cout << "--------------------------------------------------" << std::endl;
+		}
+
 		void printDatabase() {
-			std::cout << "--------------------------------------------------" << std::endl;;
-			std::cout << "Hi, Welcome to the warehouse." << std::endl;
+			std::cout << "--------------------------------------------------" << std::endl;
+			std::cout << "Hi, Welcome to the warehouse. Here is the database details:" << std::endl;
 			std::cout << "We have " << rows << " rows, " << cols << " cols, and " << levels << " levels for shelves." << std::endl;
 			for (std::map<std::string, Inventory*>::iterator iterator = warehouseDatabase.begin(); iterator != warehouseDatabase.end(); iterator++) {
 				Inventory* inventory = iterator->second;
@@ -79,6 +96,6 @@ class WarehouseDatabase {
 				}
 			}
 
-			std::cout << "--------------------------------------------------" << std::endl;;
+			std::cout << "--------------------------------------------------" << std::endl;
 		}
 };
