@@ -27,8 +27,14 @@ class WarehouseDatabase {
 			case 1:
 				layout_initialization_file = WAREHOUSE_INITIALIZATION_FILEA;
 				break;
-			default:
+			case 2:
 				layout_initialization_file = WAREHOUSE_INITIALIZATION_FILEB;
+				break;
+			case 3:
+				layout_initialization_file = WAREHOUSE_INITIALIZATION_FILEC;
+				break;
+			default:
+				layout_initialization_file = WAREHOUSE_INITIALIZATION_FILEA;
 			}
 			std::ifstream fin(layout_initialization_file);
 			if (fin.is_open()) {

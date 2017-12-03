@@ -10,12 +10,12 @@ public:
 	int id;
 	int userID;
 	std::map<std::string, int> orders;
-	Order(int id, int userID) : id(id), userID(userID) {}
 	// status = 0 created
 	// status = 1 in process
 	// status = 2 completed
 	int status;
-
+	int warehouse;
+	Order(int id, int userID, int warehouse) : id(id), userID(userID), warehouse(warehouse) { status = 0; }
 	Order(char* in, int status = 0) {
 		int index = 0;
 		char id_arr[2];

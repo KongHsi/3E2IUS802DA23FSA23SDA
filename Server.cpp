@@ -45,9 +45,10 @@ void service(int client_id, cpen333::process::socket client, Database& database)
 					success = 0;
 				else {
 					database.database[str]->number -= orderCount;
+					int warehouse = database.database[str]->warehouse;
 					database.printDatabase();
 					if (database.orders.find(client_id) == database.orders.end()) {
-						database.createOrder(client_id, str, orderCount);
+						database.createOrder(client_id, str, orderCount, warehouse);
 						std::cout << "--------------------------------------------------" << std::endl;;
 						std::cout << "Created order: " << database.orders[client_id]->id
 							<< " User id: " << database.orders[client_id]->userID << std::endl;
@@ -73,7 +74,9 @@ void service(int client_id, cpen333::process::socket client, Database& database)
 				client.write(&success, sizeof(success));
 			}
 			else {
-				cpen333::process::socket socket("localhost", PORT_NUMBER1);
+				int warehouseID = database.orders[client_id]->warehouse;
+				int portNumber = warehouseID + WAREHOUSE_PORT_NUMBER - 1;
+				cpen333::process::socket socket("localhost", portNumber);
 				std::cout << "Client connecting...";
 				std::cout.flush();
 				if (socket.open()) {

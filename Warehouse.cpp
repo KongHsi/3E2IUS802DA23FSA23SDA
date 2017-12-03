@@ -89,7 +89,7 @@ void main_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
 	std::vector<Robot*> robots;
 	const int nrobots = NROBOTS;
 	for (int i = 0; i < nrobots; i++) {
-		robots.push_back(new Robot(i, warehouseDatabase.taskQueue));
+		robots.push_back(new Robot(i, warehouseDatabase.taskQueue, warehouseID));
 	}
 	
 	for (auto& robot : robots) {
@@ -109,8 +109,14 @@ void initializeMap(int warehouseID, MapInfo& minfo, RobotInfo& rinfo) {
 	case 1:
 		map_file = MAP_INITIALIZATION_FILEA;
 		break;
-	default:
+	case 2:
 		map_file = MAP_INITIALIZATION_FILEB;
+		break;
+	case 3:
+		map_file = MAP_INITIALIZATION_FILEC;
+		break;
+	default:
+		map_file = MAP_INITIALIZATION_FILEA;
 	}
 	std::ifstream fin(map_file);
 	std::string line;
@@ -153,7 +159,22 @@ int main() {
 
 	WarehouseDatabase warehouseDatabase(warehouseID);
 	//initialize map
-	cpen333::process::shared_object<SharedData> memory(MAP_MEMORY_NAME);
+	std::string map_memory_id;
+	switch (warehouseID) {
+	case 1:
+		map_memory_id = MAP_MEMORY_NAME_1;
+		break;
+	case 2:
+		map_memory_id = MAP_MEMORY_NAME_2;
+		break;
+	case 3:
+		map_memory_id = MAP_MEMORY_NAME_3;
+		break;
+	default:
+		map_memory_id = MAP_MEMORY_NAME_1;
+	}
+
+	cpen333::process::shared_object<SharedData> memory(map_memory_id);
 	initializeMap(warehouseID, memory->minfo, memory->rinfo);
 	memory->magic = 11;
 	memory->quit = false;
@@ -167,14 +188,8 @@ int main() {
 	thread_manager.detach();
 	std::this_thread::sleep_for(std::chrono::seconds(2));
 
-	int warehouse_port_number;
-	switch (warehouseID) {
-		case 1:
-			warehouse_port_number = PORT_NUMBER1;
-			break;
-		default:
-			warehouse_port_number = PORT_NUMBER2;
-	}
+	int warehouse_port_number = warehouseID + WAREHOUSE_PORT_NUMBER - 1;
+
 	cpen333::process::socket_server server_warehouse(warehouse_port_number);
 	server_warehouse.open();
 	safe_printf( "Server started on port %d.\n" ,server_warehouse.port());

@@ -19,7 +19,7 @@ class MapUI {
 	int exit_[2];   // exit location
 
 public:
-	MapUI() : display_(), memory_(MAP_MEMORY_NAME), mutex_(MAP_MUTEX_NAME) {
+	MapUI(std::string map_memory, std::string map_mutex) : display_(), memory_(map_memory), mutex_(map_mutex) {
 		// clear display and hide cursor
 		display_.clear_all();
 		display_.set_cursor_visible(false);
@@ -112,13 +112,35 @@ public:
 };
 
 int main() {
-	cpen333::process::shared_object<SharedData> memory(MAP_MEMORY_NAME);
+	std::cout << "Please let me know the warehouse ID: " << std::endl;
+	int warehouseid;
+	std::cin >> warehouseid;
+	std::string memory_id;
+	std::string mutex_id;
+	switch (warehouseid) {
+	case 1:
+		memory_id = MAP_MEMORY_NAME_1;
+		mutex_id = MAP_MUTEX_NAME_1;
+		break;
+	case 2:
+		memory_id = MAP_MEMORY_NAME_2;
+		mutex_id = MAP_MUTEX_NAME_2;
+		break;
+	case 3:
+		memory_id = MAP_MEMORY_NAME_3;
+		mutex_id = MAP_MUTEX_NAME_3;
+		break;
+	default:
+		memory_id = MAP_MEMORY_NAME_1;
+		mutex_id = MAP_MUTEX_NAME_1;
+	}
+	cpen333::process::shared_object<SharedData> memory(memory_id);
 	if (memory->magic != 11) {
 		std::cout << "error";
 		return 0;
 	}
 	//initialize previous locations of characters
-	MapUI ui;
+	MapUI ui(memory_id, mutex_id);
 	ui.draw_map();
 	// continue looping until main program has quit
 	while (!memory->quit) {

@@ -16,8 +16,8 @@ class Database {
 		std::map<std::string, Item*> database;
 		std::map<int, Order*> orders;
 		
-		void createOrder(int id, std::string item, int count) {
-			Order* order = new Order(orderIDCount++, id);
+		void createOrder(int id, std::string item, int count, int warehouseID) {
+			Order* order = new Order(orderIDCount++, id, warehouseID);
 			order->orders[item] = count;
 			orders[id] = order;
 		}

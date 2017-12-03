@@ -1,8 +1,12 @@
 #ifndef MAP_COMMON_H
 #define MAP_COMMON_H
 
-#define MAP_MEMORY_NAME "mapr"
-#define MAP_MUTEX_NAME "map_mutex"
+#define MAP_MEMORY_NAME_1 "mapr1"
+#define MAP_MEMORY_NAME_2 "mapr2"
+#define MAP_MEMORY_NAME_3 "mapr3"
+#define MAP_MUTEX_NAME_1 "map_mutex1"
+#define MAP_MUTEX_NAME_2 "map_mutex2"
+#define MAP_MUTEX_NAME_3 "map_mutex3"
 
 #define WALL_CHAR 'W'
 #define EMPTY_CHAR ' '

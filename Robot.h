@@ -25,7 +25,7 @@ public:
 	int locC;
 	int locR;
 
-	MapRobot() : memory_(MAP_MEMORY_NAME), mutex_(MAP_MUTEX_NAME),
+	MapRobot(std::string map_memory, std::string map_mutex) : memory_(map_memory), mutex_(map_mutex),
 		minfo_(), idx_(0), loc_() {
 		while (memory_->magic != 11);
 		// copy map contents
@@ -122,9 +122,10 @@ class Robot : public cpen333::thread::thread_object {
 
 public:
 	int id;
+	int warehouse;
 	DynamicQueue* tasks;
-	Robot(int id, DynamicQueue* tasks) :
-		id(id), tasks(tasks) {}
+	Robot(int id, DynamicQueue* tasks, int warehouse) :
+		id(id), tasks(tasks), warehouse(warehouse) {}
 
 
 	int main() {
@@ -134,11 +135,30 @@ public:
 			safe_printf("Robot %d started\n", id);
 		}
 
+		std::string memory_id;
+		std::string mutex_id;
+		switch (warehouse) {
+		case 1:
+			memory_id = MAP_MEMORY_NAME_1;
+			mutex_id = MAP_MUTEX_NAME_1;
+			break;
+		case 2:
+			memory_id = MAP_MEMORY_NAME_2;
+			mutex_id = MAP_MUTEX_NAME_2;
+			break;
+		case 3:
+			memory_id = MAP_MEMORY_NAME_3;
+			mutex_id = MAP_MUTEX_NAME_3;
+			break;
+		default:
+			memory_id = MAP_MEMORY_NAME_1;
+			mutex_id = MAP_MUTEX_NAME_1;
+		}
 		
 		while (true) {
 			Task* task = tasks->get();
 			safe_printf("Robot %d: I am heading to row: %d, col: %d, shelf: %d\n",id,task->loc.x, task->loc.y, task->loc.shelf);
-			MapRobot runner;
+			MapRobot runner(memory_id, mutex_id);
 			MapInfo minfo = runner.memory_->minfo;
 			runner.go(minfo, runner.locC, runner.locR, id, task->loc.x, task->loc.y, task->dest);
 			std::this_thread::sleep_for(std::chrono::seconds(2));
