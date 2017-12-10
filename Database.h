@@ -63,14 +63,14 @@ class Database {
 		}
 
 		void printDatabase() {
-			std::cout << "--------------------------------------------------" << std::endl;;
+			std::cout << "--------------------------------------------------" << std::endl;
 			for (std::map<std::string, Item*>::iterator iterator = database.begin(); iterator != database.end(); iterator++) {
 				Item* item = iterator->second;
 				std::cout << "Item name: " << item->name << ", "
 					<< "Number:  " << item->number << ", "
 					<< "Warehouse: " << item->warehouse << std::endl;
 			}
-			std::cout << "--------------------------------------------------" << std::endl;;
+			std::cout << "--------------------------------------------------" << std::endl;
 		}
 };
 

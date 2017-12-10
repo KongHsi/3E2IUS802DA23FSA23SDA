@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <set>
 #include <thread>
 #include <memory>
 #include <mutex>
@@ -50,20 +51,26 @@ void print_menu() {
 	std::cout << "=========================================" << std::endl;
 	std::cout << " (1) View products and stock availability" << std::endl;
 	std::cout << " (2) View orders" << std::endl;
+	std::cout << " (3) Add robot" << std::endl;
+	std::cout << " (4) Remove robot" << std::endl;
+	std::cout << " (5) View all robots" << std::endl;
 	std::cout << " (0) Quit" << std::endl;
 	std::cout << "=========================================" << std::endl;
 	std::cout << "Enter number: ";
 	std::cout.flush();
 }
 
+// shared between manager thread and main_thread
+std::vector<Robot*> robots;
+std::set<int> robot_ids;
 void manager_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
 	cpen333::process::mutex mutex(WAREHOUSE_PRINT_MUTEX);
-	{
-		std::lock_guard<cpen333::process::mutex> lock(mutex);
-		print_menu();
-	}
 	char cmd = 0;
 	while (cmd != MANAGERQUIT) {
+		{
+			std::lock_guard<cpen333::process::mutex> lock(mutex);
+			print_menu();
+		}
 		std::cin >> cmd;
 		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		if (cmd == MANAGER_VIEW_STOCK) {
@@ -78,26 +85,97 @@ void manager_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
 				warehouseDatabase.printOrders();
 			}
 		}
+		else if (cmd == MANAGER_ADD_ROBOT) {
+			{
+				std::lock_guard<cpen333::process::mutex> lock(mutex);
+				std::cout << "What's robot's ID?" << std::endl;
+			}
+			int r_id;
+			std::cin >> r_id;
+			if (r_id >= MAX_ROBOTS || r_id < 0 )
+			{
+				std::lock_guard<cpen333::process::mutex> lock(mutex);
+				std::cout << "Robot id is not valid." << std::endl;
+			}
+			else if (robot_ids.find(r_id) != robot_ids.end()) 
+			{
+				std::lock_guard<cpen333::process::mutex> lock(mutex);
+				std::cout << "Robot id is already used." << std::endl;
+			}
+			else {
+				robot_ids.insert(r_id);
+				robots.push_back(new Robot(r_id, warehouseDatabase.taskQueue, warehouseID));
+				{
+					std::lock_guard<cpen333::process::mutex> lock(mutex);
+					std::cout << "Robot " << r_id << " is added successfully." << std::endl;
+				}
+			}
+		}
+		else if (cmd == MANAGER_REMOVE_ROBOT) {
+			{
+				std::lock_guard<cpen333::process::mutex> lock(mutex);
+				std::cout << "What's robot's ID?" << std::endl;
+			}
+			int r_id;
+			std::cin >> r_id;
+			if(r_id >= robots.size() || r_id < 0)
+			{
+				std::lock_guard<cpen333::process::mutex> lock(mutex);
+				std::cout << "Robot id is not valid." << std::endl;
+			} 
+			else if (robot_ids.find(r_id) == robot_ids.end())
+			{
+				std::lock_guard<cpen333::process::mutex> lock(mutex);
+				std::cout << "There's no such a robot." << std::endl;
+			}
+			else {
+				Robot* r = robots.at(r_id);
+				robots.erase(robots.begin() + r_id);
+				robot_ids.erase(r_id);
+				r->shouldEnd = true;
+				{
+					std::lock_guard<cpen333::process::mutex> lock(mutex);
+					std::cout << "Robot " << r_id << " is removed successfully." << std::endl;
+				}
+			}
+		}
+		else if (cmd == MANAGER_VIEW_ROBOTS) {
+			{
+				std::lock_guard<cpen333::process::mutex> lock(mutex);
+				std::cout << "--------------------------------------------------" << std::endl;
+				std::cout << "Available robots: " << std::endl;
+				std::set<int>::iterator it = robot_ids.begin();
+				while (it != robot_ids.end()) {
+					std::cout << "\tRobot id: " << *it++ << std::endl;
+				}
+				std::cout << "--------------------------------------------------" << std::endl;
+			}
+		}
 		else {
-			safe_printf("Command is not vaild\n");
+			{
+				std::lock_guard<cpen333::process::mutex> lock(mutex);
+				safe_printf("Command is not vaild\n");
+			}
 		}
 	}
 }
-
 void main_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
 	//create robots
-	std::vector<Robot*> robots;
 	const int nrobots = NROBOTS;
 	for (int i = 0; i < nrobots; i++) {
+		robot_ids.insert(i);
 		robots.push_back(new Robot(i, warehouseDatabase.taskQueue, warehouseID));
 	}
 	
 	for (auto& robot : robots) {
 		robot->start();
+		robot->detach();
 	}
+	/*
 	for (auto& robot : robots) {
 		robot->join();
 	}
+	*/
 }
 
 void initializeMap(int warehouseID, MapInfo& minfo, RobotInfo& rinfo) {

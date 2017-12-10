@@ -9,6 +9,9 @@
 
 #define MANAGER_VIEW_STOCK '1'
 #define MANAGER_VIEW_ORDER '2'
+#define MANAGER_ADD_ROBOT '3'
+#define MANAGER_REMOVE_ROBOT '4'
+#define MANAGER_VIEW_ROBOTS '5'
 #define MANAGERQUIT '0'
 #define WAREHOUSE_PRINT_MUTEX "warehouse_print_mutex"
 

@@ -124,8 +124,11 @@ public:
 	int id;
 	int warehouse;
 	DynamicQueue* tasks;
+	bool shouldEnd;
 	Robot(int id, DynamicQueue* tasks, int warehouse) :
-		id(id), tasks(tasks), warehouse(warehouse) {}
+		id(id), tasks(tasks), warehouse(warehouse) {
+		shouldEnd = false;
+	}
 
 
 	int main() {
@@ -155,15 +158,24 @@ public:
 			mutex_id = MAP_MUTEX_NAME_1;
 		}
 		
-		while (true) {
+		do {
 			Task* task = tasks->get();
+			if (shouldEnd) {
+				tasks->add(task);
+				break;
+			}
 			safe_printf("Robot %d: I am heading to row: %d, col: %d, shelf: %d\n",id,task->loc.x, task->loc.y, task->loc.shelf);
 			MapRobot runner(memory_id, mutex_id);
 			MapInfo minfo = runner.memory_->minfo;
 			runner.go(minfo, runner.locC, runner.locR, id, task->loc.x, task->loc.y, task->dest);
 			std::this_thread::sleep_for(std::chrono::seconds(2));
 			safe_printf("Robot %d: I am heading to loading deck: %d\n", id, task->dest);
-		}
+		} while (!shouldEnd);
+
+	{
+		std::lock_guard<cpen333::process::mutex> lock(mutex);
+		safe_printf("Robot %d ended\n", id);
+	}
 	return 0;
 	}
 };
