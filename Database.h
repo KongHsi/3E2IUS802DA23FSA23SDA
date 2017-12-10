@@ -19,12 +19,14 @@ class Database {
 		void createOrder(int id, std::string item, int count, int warehouseID) {
 			Order* order = new Order(orderIDCount++, id, warehouseID);
 			order->orders[item] = count;
+			order->warehouse_IDs[item] = warehouseID;
 			orders[id] = order;
 		}
 
-		void updateOrder(int id, std::string item, int count) {
+		void updateOrder(int id, std::string item, int count, int warehouseID) {
 			if (orders[id]->orders.find(item) == orders[id]->orders.end()) {
 				orders[id]->orders[item] = count;
+				orders[id]->warehouse_IDs[item] = warehouseID;
 			}
 			else {
 				orders[id]->orders[item] += count;

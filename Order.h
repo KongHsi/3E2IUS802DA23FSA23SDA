@@ -9,7 +9,9 @@ class Order {
 public:
 	int id;
 	int userID;
+	int count;
 	std::map<std::string, int> orders;
+	std::map<std::string, int> warehouse_IDs;
 	// status = 0 created
 	// status = 1 in process
 	// status = 2 completed
@@ -46,6 +48,7 @@ public:
 			in++;
 		}
 		//status = status;
+		count = countTotal();
 	}
 	
 	void printOrder() {
@@ -56,6 +59,14 @@ public:
 			std::cout << "Item: " << iterator->first << " Quantity: " << iterator->second << std::endl;
 		}
 		std::cout << "--------------------------------------------------" << std::endl;
+	}
+
+	int countTotal() {
+		int count = 0;
+		for (std::map<std::string, int>::iterator iterator = orders.begin(); iterator != orders.end(); iterator++) {
+			count += iterator->second;
+		}
+		return count;
 	}
 
 	std::string orderToString() {

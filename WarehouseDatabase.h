@@ -1,3 +1,6 @@
+#ifndef WD
+#define WD
+
 #include <string>
 #include <stdlib.h>
 #include <fstream>
@@ -8,6 +11,7 @@
 #include "Location.h"
 #include "DynamicQueue.h"
 #include "Order.h"
+#include "map_common.h"
 
 class WarehouseDatabase {
 	public:
@@ -18,8 +22,18 @@ class WarehouseDatabase {
 		std::vector<Order> orders;
 		DynamicQueue* taskQueue;
 		bool locations[20][20][10]; //current max cols*rows*levels is 20*20*10
+		//decks for loading
 
+		std::vector<int> decks_available;
+		std::vector<int> currentLoadingDeck;
+		int requestDeckToleave;
+
+		//initalization
 		WarehouseDatabase(int warehouse_id) : orders() {
+			requestDeckToleave = -1;
+			for (int i = NTRUCKS - 1; i >= 0; i--) {
+				decks_available.push_back(i);
+			}
 			taskQueue = new DynamicQueue();
 			std::cout << "Initializing warehouse database.\n" << std::endl;
 			std::string layout_initialization_file;
@@ -73,6 +87,22 @@ class WarehouseDatabase {
 			printDatabase();
 		}
 
+		Location* findLoc() {
+			bool findPos = false;
+			Location* loc = nullptr;
+			do {
+				int tempRow = rand() % rows;
+				int tempCol = rand() % cols;
+				int tempLevel = rand() % levels;
+				if (!locations[tempRow][tempCol][tempLevel]) {
+					locations[tempRow][tempCol][tempLevel] = true;
+					loc = new Location(tempRow, tempCol, tempLevel);
+					findPos = true;
+				}
+			} while (!findPos);
+			return loc;
+		}
+
 		Order addOrder(char* str) {
 			Order order(str);
 			orders.push_back(order);
@@ -105,3 +135,5 @@ class WarehouseDatabase {
 			std::cout << "--------------------------------------------------" << std::endl;
 		}
 };
+
+#endif 

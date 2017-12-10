@@ -21,6 +21,7 @@
 #define MAX_ROBOTS  20
 
 #define NROBOTS 6
+#define NTRUCKS 6
 
 struct MapInfo {
 	int rows;           // rows in map

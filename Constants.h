@@ -23,6 +23,25 @@
 #define WAREHOUSE_PORT_NUMBER 52103
 #define DATABASE_MUTEX "database_mutex"
 
+#define DECK_SEMAPHORE1 "deck_semaphore"
+#define DECK_SEMAPHORE_SIZE1 4
+#define DECK_MUTEX1 "deck_mutex"
+#define DECK_CV1 "deck_cv"
+#define DECK_SEMAPHORE2 "deck_semaphore2"
+#define DECK_SEMAPHORE_SIZE2 4
+#define DECK_MUTEX2 "deck_mutex2"
+#define DECK_CV2 "deck_cv2"
+#define DECK_SEMAPHORE3 "deck_semaphore3"
+#define DECK_SEMAPHORE_SIZE3 4
+#define DECK_MUTEX3 "deck_mutex3"
+#define DECK_CV3 "deck_cv3"
+
+
+
+
+
+
+
 #define ITEMS_INITIALIZATION_FILE "data/items_initialization_file.txt"
 
 #define WAREHOUSE_MEMORY "warehouse_memory"
@@ -32,5 +51,5 @@
 #define MAP_INITIALIZATION_FILEA "data/map_initialization_fileA.txt"
 #define MAP_INITIALIZATION_FILEB "data/map_initialization_fileB.txt"
 #define MAP_INITIALIZATION_FILEC "data/map_initialization_fileC.txt"
-
+#define TRUCK_INITIALIZATION_FILEA "data/truck_initialization_fileA.txt"
 #endif

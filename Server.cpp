@@ -55,7 +55,7 @@ void service(int client_id, cpen333::process::socket client, Database& database)
 						database.orders[client_id]->printOrder();
 					}
 					else {
-						database.updateOrder(client_id, str, orderCount);
+						database.updateOrder(client_id, str, orderCount,warehouse);
 						std::cout << "--------------------------------------------------" << std::endl;;
 						std::cout << "Update order: " << database.orders[client_id]->id
 							<< " User id: " << database.orders[client_id]->userID << std::endl;

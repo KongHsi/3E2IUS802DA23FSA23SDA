@@ -6,21 +6,39 @@
 #include <thread>
 #include <memory>
 #include <mutex>
+#include <cpen333/process/socket.h>
+#include <cpen333/process/shared_memory.h>
+#include <cpen333/process/mutex.h>
+#include <cpen333/process/semaphore.h>
 #include "Database.h"
 #include "Constants.h"
 #include "Order.h"
 #include "WarehouseDatabase.h"
-#include <cpen333/process/socket.h>
-#include <cpen333/process/shared_memory.h>
-#include <cpen333/process/mutex.h>
 #include "Robot.h"
 #include "DynamicQueue.h"
 #include "safe_printf.h"
 #include "map_common.h"
+#include "Truck.h"
 
 
-
-void service_warehouse(int id_warehouse, cpen333::process::socket client_warehouse, WarehouseDatabase& warehouseDatabase) {
+void service_warehouse(int id_warehouse, cpen333::process::socket client_warehouse, WarehouseDatabase& warehouseDatabase, std::map<int, Truck*>& deck_truck_map) {
+	std::string deck_mutex_name;
+	std::string deck_cv_name;
+	if (id_warehouse == 1) {
+		deck_mutex_name = DECK_MUTEX1;
+		deck_cv_name = DECK_CV1;
+	}
+	else if (id_warehouse == 2) {
+		deck_mutex_name = DECK_MUTEX2;
+		deck_cv_name = DECK_CV2;
+	}
+	else {
+		deck_mutex_name = DECK_MUTEX3;
+		deck_cv_name = DECK_CV3;
+	}
+	
+	cpen333::process::mutex deck_mutex(deck_mutex_name);
+	cpen333::process::condition_variable deck_cv(deck_cv_name);
 	std::cout << "Web Server " << id_warehouse << " connected" << std::endl;
 
 	int size;
@@ -34,12 +52,27 @@ void service_warehouse(int id_warehouse, cpen333::process::socket client_warehou
 	Order order = warehouseDatabase.addOrder(cstr);
 	order.printOrder();
 
+	//compute deck
+	int dest_deck = -1;
+	for (std::vector<int>::iterator it = warehouseDatabase.currentLoadingDeck.begin(); it != warehouseDatabase.currentLoadingDeck.end(); it++) {
+		if (deck_truck_map[*it]->capacity < order.count) {
+			warehouseDatabase.requestDeckToleave = *it;
+			deck_cv.notify_all();
+		}
+		else {
+			deck_truck_map[*it]->capacity -= order.count;
+			dest_deck = *it;
+			break;
+		}
+	}
+	if (dest_deck == -1)
+		return;
 	for (std::map<std::string, int>::iterator iterator = order.orders.begin(); iterator != order.orders.end(); iterator++) {
 		warehouseDatabase.warehouseDatabase[iterator->first]->count -= iterator->second;
 		for (int i = 0; i < iterator->second; i++) {
 			Location* loc = warehouseDatabase.warehouseDatabase[iterator->first]->locations.back();
 			warehouseDatabase.warehouseDatabase[iterator->first]->locations.pop_back();
-			Task* task = new Task(*loc, 1); //TODO: delivery dock
+			Task* task = new Task(*loc, dest_deck);
 			warehouseDatabase.taskQueue->add(task);
 		}
 	}
@@ -56,13 +89,14 @@ void print_menu() {
 	std::cout << " (5) View all robots" << std::endl;
 	std::cout << " (0) Quit" << std::endl;
 	std::cout << "=========================================" << std::endl;
-	std::cout << "Enter number: ";
+	std::cout << "Enter number: " << std::endl;
 	std::cout.flush();
 }
 
 // shared between manager thread and main_thread
 std::vector<Robot*> robots;
 std::set<int> robot_ids;
+std::vector<Truck*> trucks;
 void manager_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
 	cpen333::process::mutex mutex(WAREHOUSE_PRINT_MUTEX);
 	char cmd = 0;
@@ -104,7 +138,7 @@ void manager_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
 			}
 			else {
 				robot_ids.insert(r_id);
-				robots.push_back(new Robot(r_id, warehouseDatabase.taskQueue, warehouseID));
+				robots.push_back(new Robot(r_id, std::ref(warehouseDatabase), warehouseID));
 				{
 					std::lock_guard<cpen333::process::mutex> lock(mutex);
 					std::cout << "Robot " << r_id << " is added successfully." << std::endl;
@@ -159,23 +193,30 @@ void manager_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
 		}
 	}
 }
-void main_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
+
+void main_thread(int warehouseID, WarehouseDatabase& warehouseDatabase, std::map<int, Truck*>& deck_truck_map) {
 	//create robots
 	const int nrobots = NROBOTS;
 	for (int i = 0; i < nrobots; i++) {
 		robot_ids.insert(i);
-		robots.push_back(new Robot(i, warehouseDatabase.taskQueue, warehouseID));
+		robots.push_back(new Robot(i, std::ref(warehouseDatabase), warehouseID));
 	}
 	
 	for (auto& robot : robots) {
 		robot->start();
 		robot->detach();
 	}
-	/*
-	for (auto& robot : robots) {
-		robot->join();
+
+	for (int i = 0; i < NTRUCKS; i++) {
+		trucks.push_back(new Truck(i, std::ref(warehouseDatabase), std::ref(deck_truck_map), warehouseID));
 	}
-	*/
+
+	for (auto& truck : trucks) {
+		truck->start();
+		truck->detach();
+	}
+
+	 
 }
 
 void initializeMap(int warehouseID, MapInfo& minfo, RobotInfo& rinfo) {
@@ -258,8 +299,25 @@ int main() {
 	memory->quit = false;
 
 
+	std::string deck_semaphore_name;
+	int deck_semaphore_size;
+	if (warehouseID == 1) {
+		deck_semaphore_name = DECK_SEMAPHORE1;
+		deck_semaphore_size = DECK_SEMAPHORE_SIZE1;
+	}
+	else if (warehouseID == 2) {
+		deck_semaphore_name = DECK_SEMAPHORE2;
+		deck_semaphore_size = DECK_SEMAPHORE_SIZE2;
+	}
+	else {
+		deck_semaphore_name = DECK_SEMAPHORE3;
+		deck_semaphore_size = DECK_SEMAPHORE_SIZE3;
+	}
+
 	//initialize main thread
-	std::thread thread_main(main_thread, warehouseID, std::ref(warehouseDatabase));
+	std::map<int, Truck*> deck_truck_map;
+	cpen333::process::semaphore semaphore_deck(deck_semaphore_name, deck_semaphore_size);
+	std::thread thread_main(main_thread, warehouseID, std::ref(warehouseDatabase), std::ref(deck_truck_map));
 	thread_main.detach();
 
 	std::thread thread_manager(manager_thread, warehouseID, std::ref(warehouseDatabase));
@@ -273,11 +331,11 @@ int main() {
 	safe_printf( "Server started on port %d.\n" ,server_warehouse.port());
 	cpen333::process::socket client_warehouse;
 	while (server_warehouse.accept(client_warehouse)) {
-		std::thread thread(service_warehouse, warehouseID, std::move(client_warehouse), std::ref(warehouseDatabase));
+		std::thread thread(service_warehouse, warehouseID, std::move(client_warehouse), std::ref(warehouseDatabase), std::ref(deck_truck_map));
 		thread.detach();
 	}
 	// close server
 	server_warehouse.close();
 	return 0;
 }
-
+ 

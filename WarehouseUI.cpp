@@ -9,14 +9,13 @@
 
 class MapUI {
 	// display offset for better visibility
-	static const int XOFF = 2;
+	static const int XOFF = 3;
 	static const int YOFF = 1;
 	cpen333::console display_;
 	cpen333::process::shared_object<SharedData> memory_;
 	cpen333::process::mutex mutex_;
 	// previous positions of runners
 	int lastpos_[MAX_ROBOTS][2];
-	int exit_[2];   // exit location
 
 public:
 	MapUI(std::string map_memory, std::string map_mutex) : display_(), memory_(map_memory), mutex_(map_mutex) {
@@ -29,15 +28,6 @@ public:
 			lastpos_[i][COL_IDX] = -1;
 			lastpos_[i][ROW_IDX] = -1;
 		}
-
-		for (size_t i = 0; i < MAX_ROBOTS; ++i) {
-			lastpos_[i][COL_IDX] = -1;
-			lastpos_[i][ROW_IDX] = -1;
-		}
-
-		// initialize exit location
-		exit_[COL_IDX] = -1;
-		exit_[ROW_IDX] = -1;
 	}
 
 	void draw_map() {
@@ -73,42 +63,35 @@ public:
 		RobotInfo& rinfo = memory_->rinfo;
 		// draw all runner locations
 		mutex_.lock();
-		for (size_t i = 0; i<rinfo.nrobots; ++i) {
-			char me = 'R';//'A' + i;
+		for (int i = 0; i<rinfo.nrobots; ++i) {
+			char me = START_CHAR;
 			int newr = rinfo.rloc[i][ROW_IDX];
 			int newc = rinfo.rloc[i][COL_IDX];
-			// if not already at the exit...
+
 			if (rinfo.rInMap[i]) {
-				if (newc != lastpos_[i][COL_IDX]
-					|| newr != lastpos_[i][ROW_IDX]) {
-					// zero out last spot and update known location
+				if (((newc != lastpos_[i][COL_IDX])
+					|| (newr != lastpos_[i][ROW_IDX])) && (lastpos_[i][COL_IDX] > 0) && (lastpos_[i][ROW_IDX] > 0)) {
 					display_.set_cursor_position(YOFF + lastpos_[i][ROW_IDX], XOFF + lastpos_[i][COL_IDX]);
 					std::printf("%c", EMPTY_CHAR);
-					lastpos_[i][COL_IDX] = newc;
-					lastpos_[i][ROW_IDX] = newr;
 				}
+				lastpos_[i][COL_IDX] = newc;
+				lastpos_[i][ROW_IDX] = newr;
 				display_.set_cursor_position(YOFF + newr, XOFF + newc);
-				std::printf("%c", me);
+				if(newc > 0 && newr > 0)
+					std::printf("%c", me);
 			}
 			else {
-				// erase old position if now finished
-				if (lastpos_[i][COL_IDX] != exit_[COL_IDX] || lastpos_[i][ROW_IDX] != exit_[ROW_IDX]) {
+				if (lastpos_[i][ROW_IDX] > 0 && lastpos_[i][COL_IDX] > 0) {
 					display_.set_cursor_position(YOFF + lastpos_[i][ROW_IDX], XOFF + lastpos_[i][COL_IDX]);
 					std::printf("%c", EMPTY_CHAR);
-					lastpos_[i][COL_IDX] = newc;
-					lastpos_[i][ROW_IDX] = newr;
-					// display a completion message
-					display_.set_cursor_position(YOFF, XOFF + memory_->minfo.cols + 2);
-					//std::printf("robot %c completed!!", me);
+					lastpos_[i][COL_IDX] = -1;
+					lastpos_[i][ROW_IDX] = -1;
 				}
 			}
 		}
 		fflush(stdout);  // force output buffer to flush
 		mutex_.unlock();
 	}
-
-
-
 };
 
 int main() {
@@ -145,7 +128,7 @@ int main() {
 	// continue looping until main program has quit
 	while (!memory->quit) {
 		ui.draw_robots();
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		std::this_thread::sleep_for(std::chrono::milliseconds(300));
 	}
 	return 0;
 }

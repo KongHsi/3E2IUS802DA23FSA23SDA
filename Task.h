@@ -7,9 +7,10 @@ class Task {
 public:
 	Location loc;
 	int dest;
+	int type; // 0, shelf to deck, 1 deck to shelf
 	Task(){}
-	Task(Location loc, int dest) :
-		loc(loc), dest(dest) {}
+	Task(Location loc, int dest, int type = 0) :
+		loc(loc), dest(dest), type(type) {}
 };
 
 #endif
