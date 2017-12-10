@@ -9,8 +9,8 @@
 
 class MapUI {
 	// display offset for better visibility
-	static const int XOFF = 3;
-	static const int YOFF = 1;
+	static const int XOFF = 0;
+	static const int YOFF = 0;
 	cpen333::console display_;
 	cpen333::process::shared_object<SharedData> memory_;
 	cpen333::process::mutex mutex_;
@@ -62,35 +62,38 @@ public:
 	void draw_robots() {
 		RobotInfo& rinfo = memory_->rinfo;
 		// draw all runner locations
-		mutex_.lock();
-		for (int i = 0; i<rinfo.nrobots; ++i) {
-			char me = START_CHAR;
-			int newr = rinfo.rloc[i][ROW_IDX];
-			int newc = rinfo.rloc[i][COL_IDX];
-
-			if (rinfo.rInMap[i]) {
-				if (((newc != lastpos_[i][COL_IDX])
-					|| (newr != lastpos_[i][ROW_IDX])) && (lastpos_[i][COL_IDX] > 0) && (lastpos_[i][ROW_IDX] > 0)) {
-					display_.set_cursor_position(YOFF + lastpos_[i][ROW_IDX], XOFF + lastpos_[i][COL_IDX]);
-					std::printf("%c", EMPTY_CHAR);
+		{
+			std::lock_guard<decltype(mutex_)> lock(mutex_);
+			for (int i = 0; i < rinfo.nrobots; ++i) {
+				char me = START_CHAR;
+				int newr = rinfo.rloc[i][ROW_IDX];
+				int newc = rinfo.rloc[i][COL_IDX];
+				if (rinfo.rInMap[i]) {
+					if (((newc != lastpos_[i][COL_IDX])
+						|| (newr != lastpos_[i][ROW_IDX])) && (lastpos_[i][COL_IDX] > 0) && (lastpos_[i][ROW_IDX] > 0)) {
+						display_.set_cursor_position(YOFF + lastpos_[i][ROW_IDX], XOFF + lastpos_[i][COL_IDX]);
+						if (lastpos_[i][ROW_IDX] > 0 && lastpos_[i][COL_IDX] > 0) {
+							std::printf("%c", ' ');
+						}
+					}
+					lastpos_[i][COL_IDX] = newc;
+					lastpos_[i][ROW_IDX] = newr;
+					display_.set_cursor_position(YOFF + newr, XOFF + newc);
+					if (newc > 0 && newr > 0) {
+						std::printf("%c", me);
+					}
 				}
-				lastpos_[i][COL_IDX] = newc;
-				lastpos_[i][ROW_IDX] = newr;
-				display_.set_cursor_position(YOFF + newr, XOFF + newc);
-				if(newc > 0 && newr > 0)
-					std::printf("%c", me);
-			}
-			else {
-				if (lastpos_[i][ROW_IDX] > 0 && lastpos_[i][COL_IDX] > 0) {
-					display_.set_cursor_position(YOFF + lastpos_[i][ROW_IDX], XOFF + lastpos_[i][COL_IDX]);
-					std::printf("%c", EMPTY_CHAR);
-					lastpos_[i][COL_IDX] = -1;
-					lastpos_[i][ROW_IDX] = -1;
+				else {
+					if (lastpos_[i][ROW_IDX] == 1 && lastpos_[i][COL_IDX] == 1) {
+						display_.set_cursor_position(YOFF + lastpos_[i][ROW_IDX], XOFF + lastpos_[i][COL_IDX]);
+						std::printf("%c", ' ');
+						lastpos_[i][COL_IDX] = -1;
+						lastpos_[i][ROW_IDX] = -1;
+					}
 				}
 			}
+			fflush(stdout);  // force output buffer to flush
 		}
-		fflush(stdout);  // force output buffer to flush
-		mutex_.unlock();
 	}
 };
 
@@ -126,9 +129,9 @@ int main() {
 	MapUI ui(memory_id, mutex_id);
 	ui.draw_map();
 	// continue looping until main program has quit
-	while (!memory->quit) {
+	while (true) {
 		ui.draw_robots();
-		std::this_thread::sleep_for(std::chrono::milliseconds(300));
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	}
 	return 0;
 }
