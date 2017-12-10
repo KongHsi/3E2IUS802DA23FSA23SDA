@@ -7,6 +7,7 @@
 #define CLIENT_ORDER '3'
 #define CLIENT_QUIT '0'
 
+#define MANAGER_VIEW_MENU 'm'
 #define MANAGER_VIEW_STOCK '1'
 #define MANAGER_VIEW_ORDER '2'
 #define MANAGER_ADD_ROBOT '3'
@@ -36,11 +37,7 @@
 #define DECK_MUTEX3 "deck_mutex3"
 #define DECK_CV3 "deck_cv3"
 
-
-
-
-
-
+#define LOW_STOCK_THRESHOLD 3
 
 #define ITEMS_INITIALIZATION_FILE "data/items_initialization_file.txt"
 
@@ -52,4 +49,6 @@
 #define MAP_INITIALIZATION_FILEB "data/map_initialization_fileB.txt"
 #define MAP_INITIALIZATION_FILEC "data/map_initialization_fileC.txt"
 #define TRUCK_INITIALIZATION_FILEA "data/truck_initialization_fileA.txt"
+
+
 #endif

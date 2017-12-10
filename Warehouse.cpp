@@ -82,6 +82,7 @@ void print_menu() {
 	std::cout << "=========================================" << std::endl;
 	std::cout << "=                  MENU                 =" << std::endl;
 	std::cout << "=========================================" << std::endl;
+	std::cout << " (m) View menu "<< std::endl;
 	std::cout << " (1) View products and stock availability" << std::endl;
 	std::cout << " (2) View orders" << std::endl;
 	std::cout << " (3) Add robot" << std::endl;
@@ -107,7 +108,10 @@ void manager_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
 		}
 		std::cin >> cmd;
 		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		if (cmd == MANAGER_VIEW_STOCK) {
+		if(cmd == MANAGER_VIEW_MENU){
+			continue;
+		}
+		else if (cmd == MANAGER_VIEW_STOCK) {
 			{
 				std::lock_guard<cpen333::process::mutex> lock(mutex);
 				warehouseDatabase.printDatabase();
@@ -138,7 +142,10 @@ void manager_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
 			}
 			else {
 				robot_ids.insert(r_id);
-				robots.push_back(new Robot(r_id, std::ref(warehouseDatabase), warehouseID));
+				Robot* t_r = new Robot(r_id, std::ref(warehouseDatabase), warehouseID);
+				robots.push_back(t_r);
+				t_r->start();
+				t_r->detach();
 				{
 					std::lock_guard<cpen333::process::mutex> lock(mutex);
 					std::cout << "Robot " << r_id << " is added successfully." << std::endl;
@@ -152,7 +159,7 @@ void manager_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
 			}
 			int r_id;
 			std::cin >> r_id;
-			if(r_id >= robots.size() || r_id < 0)
+			if(r_id >= MAX_ROBOTS || r_id < 0)
 			{
 				std::lock_guard<cpen333::process::mutex> lock(mutex);
 				std::cout << "Robot id is not valid." << std::endl;
@@ -163,8 +170,19 @@ void manager_thread(int warehouseID, WarehouseDatabase& warehouseDatabase) {
 				std::cout << "There's no such a robot." << std::endl;
 			}
 			else {
-				Robot* r = robots.at(r_id);
-				robots.erase(robots.begin() + r_id);
+				Robot* r = nullptr;
+				bool found = false;
+				int i = 0;
+				for (i = 0; i < robots.size(); i++) {
+					if (robots[i]->id == r_id) {
+						r = robots[i];
+						found = true; 
+						break;
+					}
+				}
+				if (!found)
+					continue;
+				robots.erase(robots.begin() + i);
 				robot_ids.erase(r_id);
 				r->shouldEnd = true;
 				{
@@ -216,7 +234,22 @@ void main_thread(int warehouseID, WarehouseDatabase& warehouseDatabase, std::map
 		truck->detach();
 	}
 
-	 
+	cpen333::process::mutex mutex(WAREHOUSE_PRINT_MUTEX);
+	while (true) {
+		std::this_thread::sleep_for(std::chrono::seconds(10));
+		{
+			std::lock_guard<cpen333::process::mutex> lock(mutex);
+			std::cout << "--------------------------------------------------" << std::endl;
+			std::cout << "Low-stock Alert: " << std::endl;
+			for (std::map<std::string, Inventory*>::iterator iterator = warehouseDatabase.warehouseDatabase.begin(); iterator != warehouseDatabase.warehouseDatabase.end(); iterator++) {
+				Inventory* inventory = iterator->second;
+				if (inventory->count < LOW_STOCK_THRESHOLD) {
+					std::cout << inventory->name << ": " << inventory->count << std::endl;
+				}
+			}
+			std::cout << "--------------------------------------------------" << std::endl;
+		}
+	}
 }
 
 void initializeMap(int warehouseID, MapInfo& minfo, RobotInfo& rinfo) {
@@ -258,7 +291,7 @@ void initializeMap(int warehouseID, MapInfo& minfo, RobotInfo& rinfo) {
 	}
 	
 	rinfo.nrobots = NROBOTS;
-	for (int i = 0; i < rinfo.nrobots; i++) {
+	for (int i = 0; i < MAX_ROBOTS; i++) {
 		rinfo.rloc[i][COL_IDX] = -1;
 		rinfo.rloc[i][ROW_IDX] = -1;
 		rinfo.rInMap[i] = false;

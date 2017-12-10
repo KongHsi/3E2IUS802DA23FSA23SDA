@@ -64,7 +64,7 @@ public:
 		// draw all runner locations
 		{
 			std::lock_guard<decltype(mutex_)> lock(mutex_);
-			for (int i = 0; i < rinfo.nrobots; ++i) {
+			for (int i = 0; i < MAX_ROBOTS; ++i) {
 				char me = START_CHAR;
 				int newr = rinfo.rloc[i][ROW_IDX];
 				int newc = rinfo.rloc[i][COL_IDX];
